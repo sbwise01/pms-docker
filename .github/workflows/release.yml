@@ -6,6 +6,7 @@ on:
     paths:
       - "Dockerfile"
       - "hashMovies.py"
+      - "VERSION"
 
 permissions:
   id-token: write # AWS OIDC (assume dockerhub-role)
@@ -30,17 +31,17 @@ jobs:
         with:
           fetch-depth: 0 # full history + tags
 
-      # 1. The Dockerfile FROM line is the single source of truth for the tag.
-      - name: Read tag from Dockerfile
+      # 1. VERSION is the single source of truth for the wrapper release tag.
+      - name: Read version from VERSION
         id: version
         run: |
           set -euo pipefail
-          version="$(python3 .github/scripts/dockerfile_base_tag.py Dockerfile)"
+          version="$(python3 .github/scripts/version.py VERSION)"
           echo "version=$version" >> "$GITHUB_OUTPUT"
-          echo "Releasing tag: $version"
+          echo "Releasing version: $version"
 
-      # 2. If this tag already exists, it was released or burned. Fail so the
-      #    Dockerfile base must be bumped before re-running.
+      # 2. If this version is already tagged, it was released or burned. Fail so a
+      #    new bump PR must be merged (versions are never reused).
       - name: Guard against existing tag
         env:
           VERSION: ${{ steps.version.outputs.version }}
@@ -48,7 +49,7 @@ jobs:
           set -euo pipefail
           git fetch origin --tags --quiet
           if git tag --list "$VERSION" | grep -qx "$VERSION"; then
-            echo "::error::tag '$VERSION' already exists — already released or burned. Bump the Dockerfile FROM tag."
+            echo "::error::tag '$VERSION' already exists — already released or burned. Merge a new version bump."
             exit 1
           fi
 
@@ -99,7 +100,7 @@ jobs:
           username: ${{ env.DOCKERHUB_USERNAME }}
           password: ${{ env.DOCKERHUB_TOKEN }}
 
-      # 5. Build + push sbwise/pms-docker:<tag from Dockerfile>.
+      # 5. Build + push sbwise/pms-docker:<VERSION>.
       - name: Build and push image
         uses: docker/build-push-action@v6
         with:
