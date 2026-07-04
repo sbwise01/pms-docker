@@ -20,6 +20,8 @@ jobs:
   verify-and-bump:
     name: Verify & bump
     runs-on: ubuntu-latest
+    # Bot bump commits use [skip ci] so the workflow is not triggered at all; the
+    # github.actor guard is a backup if a run is still queued.
     if: github.event.pull_request.head.repo.full_name == github.repository
         && github.actor != 'github-actions[bot]'
     steps:
@@ -93,6 +95,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Compute next version & bump VERSION
+        # [skip ci] on the bump commit prevents re-triggering this workflow.
         env:
           BASE_VERSION: ${{ steps.base.outputs.base_version }}
           LEVEL: ${{ steps.bump.outputs.level }}
@@ -123,5 +126,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add VERSION
-          git commit -m "chore(release): set version to ${next}"
+          git commit -m "chore(release): set version to ${next} [skip ci]"
           git push origin "HEAD:${HEAD_REF}"
