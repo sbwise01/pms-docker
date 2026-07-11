@@ -22,13 +22,14 @@ jobs:
     # Same-repo PRs only. Fork PRs can't be granted write on the branch to push
     # the bump (and can't assume AWS roles), matching wise-k8s/terraform-plan.yml.
     runs-on: ubuntu-latest
+    outputs:
+      bot_trigger: ${{ if github.actor == 'github-actions[bot]' then 'true' else 'false' }}
     if: github.event.pull_request.head.repo.full_name == github.repository
     steps:
       - name: Escape Bot Trigger
         if: github.actor == 'github-actions[bot]'
         run: |
           echo "Workflow triggered by bot. Skipping."
-          echo "bot_trigger=true" >> $GITHUB_OUTPUT
 
   verify-and-bump:
     name: Verify & bump
