@@ -17,13 +17,28 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  escape-bot-trigger:
+    name: Escape Bot Trigger
+    # Same-repo PRs only. Fork PRs can't be granted write on the branch to push
+    # the bump (and can't assume AWS roles), matching wise-k8s/terraform-plan.yml.
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    steps:
+      - name: Escape Bot Trigger
+        if: github.actor == 'github-actions[bot]'
+        run: |
+          echo "Workflow triggered by bot. Skipping."
+          echo "bot_trigger=true" >> $GITHUB_OUTPUT
+
   verify-and-bump:
     name: Verify & bump
     runs-on: ubuntu-latest
-    # Bot bump commits use [skip ci] so the workflow is not triggered at all; the
-    # github.actor guard is a backup if a run is still queued.
+    needs: escape-bot-trigger
+    # Same-repo PRs only. Fork PRs can't be granted write on the branch to push
+    # the bump (and can't assume AWS roles), matching wise-k8s/terraform-plan.yml.
+    # Also skips run if the workflow is triggered by the github-actions[bot].
     if: github.event.pull_request.head.repo.full_name == github.repository
-        && github.actor != 'github-actions[bot]'
+        && needs.escape-bot-trigger.outputs.bot_trigger != 'true'
     steps:
       - name: Checkout PR branch
         uses: actions/checkout@v4
@@ -126,5 +141,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add VERSION
-          git commit -m "chore(release): set version to ${next} [skip ci]"
+          git commit -m "chore(release): set version to ${next}"
           git push origin "HEAD:${HEAD_REF}"
