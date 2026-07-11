@@ -42,6 +42,8 @@ jobs:
     name: Verify & bump
     runs-on: ubuntu-latest
     needs: escape-bot-trigger
+    env:
+      BOT_TRIGGER: ${{ needs.escape-bot-trigger.outputs.bot_trigger }}
     # Same-repo PRs only. Fork PRs can't be granted write on the branch to push
     # the bump (and can't assume AWS roles), matching wise-k8s/terraform-plan.yml.
     if: github.event.pull_request.head.repo.full_name == github.repository
