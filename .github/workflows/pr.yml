@@ -23,13 +23,20 @@ jobs:
     # the bump (and can't assume AWS roles), matching wise-k8s/terraform-plan.yml.
     runs-on: ubuntu-latest
     outputs:
-      bot_trigger: ${{ if github.actor == 'github-actions[bot]' then 'true' else 'false' }}
+      bot_trigger: steps.escape-bot-trigger.outputs.bot_trigger
     if: github.event.pull_request.head.repo.full_name == github.repository
     steps:
       - name: Escape Bot Trigger
-        if: github.actor == 'github-actions[bot]'
+        env:
+          GITHUB_ACTOR: ${{ github.actor }}
         run: |
-          echo "Workflow triggered by bot. Skipping."
+          if [ $GITHUB_ACTOR == 'github-actions[bot]' ]; then
+            echo "Workflow triggered by bot. Skipping."
+            echo "bot_trigger=true" >> $GITHUB_OUTPUT
+          else
+            echo "Workflow triggered by human. Continuing."
+            echo "bot_trigger=false" >> $GITHUB_OUTPUT
+          fi
 
   verify-and-bump:
     name: Verify & bump
