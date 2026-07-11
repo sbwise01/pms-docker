@@ -23,7 +23,7 @@ jobs:
     # the bump (and can't assume AWS roles), matching wise-k8s/terraform-plan.yml.
     runs-on: ubuntu-latest
     outputs:
-      bot_trigger: steps.escape-bot-trigger.outputs.bot_trigger
+      bot_trigger: ${{ steps.escape-bot-trigger.outputs.bot_trigger }}
     if: github.event.pull_request.head.repo.full_name == github.repository
     steps:
       - name: Escape Bot Trigger
