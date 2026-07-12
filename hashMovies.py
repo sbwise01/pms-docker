@@ -7,6 +7,7 @@ import os
 dir = "/plexmedia/staging/*"
 outputFileName = "/tmp/movie_hashes.csv"
 
+
 def md5(fname):
     hash_md5 = hashlib.md5()
     with open(fname, "rb") as f:
